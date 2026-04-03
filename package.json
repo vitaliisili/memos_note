@@ -1,0 +1,28 @@
+{
+  "name": "memos_note",
+  "version": "1.0.0",
+  "description": "",
+  "main": "background.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "build": "esbuild src/editor.js --bundle --outfile=lib/editor.bundle.js --format=iife --minify --target=chrome120",
+    "watch": "esbuild src/editor.js --bundle --outfile=lib/editor.bundle.js --format=iife --target=chrome120 --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@tiptap/core": "^3.22.1",
+    "@tiptap/extension-placeholder": "^3.22.1",
+    "@tiptap/extension-task-item": "^3.22.1",
+    "@tiptap/extension-task-list": "^3.22.1",
+    "@tiptap/starter-kit": "^3.22.1",
+    "tiptap-markdown": "^0.9.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.0"
+  }
+}
