@@ -46,6 +46,7 @@
           <div class="sidebar-brand">
             <svg width="18" height="18" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="7" fill="#7C6AF7"/><path d="M7 9h14M7 14h10M7 19h12" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
             <span class="app-title">Memos</span>
+            <span class="sidebar-conn-dot" id="sidebar-conn-dot" title="Connected"></span>
           </div>
           <div class="sidebar-actions">
             <button id="btn-settings" class="icon-btn" title="Settings">
@@ -78,8 +79,8 @@
         <!-- Empty state -->
         <div id="right-empty" class="right-empty-state">
           <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          <p>Select a note or create a new one</p>
-          <span class="right-empty-hint">Ctrl+N to create</span>
+          <p id="right-empty-text">Select a note or create a new one</p>
+          <span id="right-empty-hint" class="right-empty-hint">Ctrl+N to create</span>
         </div>
 
         <!-- Editor pane -->
@@ -185,7 +186,13 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
-        <div class="settings-body">
+        <div class="settings-tabs">
+          <button class="settings-tab active" data-settings-tab="general">General</button>
+          <button class="settings-tab" data-settings-tab="connection">Connection</button>
+          <button class="settings-tab" data-settings-tab="shortcuts">Shortcuts</button>
+        </div>
+        <!-- General tab -->
+        <div class="settings-body" id="settings-tab-general">
           <div class="setting-item">
             <div class="setting-info">
               <div class="setting-label">Theme</div>
@@ -223,13 +230,62 @@
               </select>
             </div>
           </div>
-          <div class="setting-divider"></div>
           <div class="setting-item">
             <div class="setting-info">
-              <div class="setting-label">Connected Server</div>
-              <div class="setting-desc" id="setting-server-url">—</div>
+              <div class="setting-label">On Startup</div>
+              <div class="setting-desc">What to show when the extension opens</div>
             </div>
+            <div class="setting-control">
+              <select id="setting-startup">
+                <option value="last-viewed">Last viewed note</option>
+                <option value="new-note">New note</option>
+                <option value="empty">Empty editor</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <!-- Connection tab -->
+        <div class="settings-body hidden" id="settings-tab-connection">
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Status</div>
+            </div>
+            <div class="connection-status" id="connection-status">
+              <span class="conn-dot" id="conn-dot"></span>
+              <span id="conn-status-text">Checking...</span>
+            </div>
+          </div>
+          <div class="setting-divider"></div>
+          <div class="setting-item-full">
+            <label class="setting-label" for="setting-url">Server URL</label>
+            <input id="setting-url" type="url" class="setting-input" placeholder="https://memos.yourdomain.com" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="setting-item-full">
+            <label class="setting-label" for="setting-token">Access Token</label>
+            <input id="setting-token" type="password" class="setting-input" placeholder="••••••••••••••••" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="setting-item conn-actions">
+            <button id="btn-save-connection" class="btn-primary btn-sm">Save</button>
             <button id="btn-disconnect" class="btn-ghost btn-danger-text">Disconnect</button>
+          </div>
+        </div>
+        <!-- Shortcuts tab -->
+        <div class="settings-body hidden" id="settings-tab-shortcuts">
+          <div class="shortcuts-section">
+            <div class="shortcuts-group-label">General</div>
+            <div class="shortcut-row"><span class="shortcut-desc">New note</span><kbd>Ctrl+N</kbd></div>
+            <div class="shortcut-row"><span class="shortcut-desc">Search notes</span><kbd>Ctrl+K</kbd></div>
+            <div class="shortcut-row"><span class="shortcut-desc">Previous note</span><kbd>Ctrl+&uarr;</kbd></div>
+            <div class="shortcut-row"><span class="shortcut-desc">Next note</span><kbd>Ctrl+&darr;</kbd></div>
+          </div>
+          <div class="setting-divider"></div>
+          <div class="shortcuts-section">
+            <div class="shortcuts-group-label">Formatting</div>
+            <div class="shortcut-row"><span class="shortcut-desc">Bold</span><kbd>Ctrl+B</kbd></div>
+            <div class="shortcut-row"><span class="shortcut-desc">Italic</span><kbd>Ctrl+I</kbd></div>
+            <div class="shortcut-row"><span class="shortcut-desc">Underline</span><kbd>Ctrl+U</kbd></div>
+            <div class="shortcut-row"><span class="shortcut-desc">Insert link</span><kbd>Ctrl+L</kbd></div>
+            <div class="shortcut-row"><span class="shortcut-desc">Inline code</span><kbd>Ctrl+`</kbd></div>
           </div>
         </div>
       </div>

@@ -58,7 +58,13 @@ const btnCloseSettings = $('btn-close-settings');
 const settingTheme     = $('setting-theme');
 const settingEditor    = $('setting-editor');
 const settingDisplay   = $('setting-display');
-const settingServerUrl = $('setting-server-url');
+const settingStartup   = $('setting-startup');
+const settingUrl       = $('setting-url');
+const settingToken     = $('setting-token');
+const btnSaveConn     = $('btn-save-connection');
+const connDot          = $('conn-dot');
+const connStatusText   = $('conn-status-text');
+const sidebarConnDot   = $('sidebar-conn-dot');
 const btnDisconnect    = $('btn-disconnect');
 
 /* ── Markdown toolbar actions (for textarea mode) ──────────── */
@@ -107,13 +113,58 @@ function api(path, opts) {
   });
 }
 
+/* ── Connection status ─────────────────────────────────────── */
+let connectionOk = false;
+
+function setConnectionStatus(status) {
+  // status: 'connected' | 'disconnected' | 'checking'
+  connectionOk = status === 'connected';
+
+  connDot.className = 'conn-dot ' + status;
+  sidebarConnDot.className = 'sidebar-conn-dot ' + status;
+
+  if (status === 'connected') {
+    connStatusText.textContent = 'Connected';
+    sidebarConnDot.title = 'Connected';
+  } else if (status === 'disconnected') {
+    connStatusText.textContent = 'Unreachable';
+    sidebarConnDot.title = 'Connection lost';
+  } else {
+    connStatusText.textContent = 'Checking...';
+    sidebarConnDot.title = 'Checking connection...';
+  }
+}
+
+async function checkConnection() {
+  if (!serverUrl || !token) {
+    setConnectionStatus('disconnected');
+    return;
+  }
+  setConnectionStatus('checking');
+  try {
+    var res = await fetch(serverUrl + '/api/v1/memos?pageSize=1', {
+      headers: { 'Authorization': 'Bearer ' + token },
+    });
+    setConnectionStatus(res.ok ? 'connected' : 'disconnected');
+  } catch (e) {
+    setConnectionStatus('disconnected');
+  }
+}
+
 /* ── Init ──────────────────────────────────────────────────── */
+let startupBehavior = 'last-viewed';
+let lastViewedNoteName = null;
+
 chrome.storage.local.get(
-  ['serverUrl', 'token', 'userName', 'theme', 'displayMode', 'editorMode'],
+  ['serverUrl', 'token', 'userName', 'theme', 'displayMode', 'editorMode', 'startupBehavior', 'lastViewedNoteName'],
   function (data) {
     applyTheme(data.theme || 'dark');
     settingTheme.value = data.theme || 'dark';
     settingDisplay.value = data.displayMode || 'popup';
+
+    startupBehavior = data.startupBehavior || 'last-viewed';
+    settingStartup.value = startupBehavior;
+    lastViewedNoteName = data.lastViewedNoteName || null;
 
     // In popup mode, set fixed dimensions
     var isPopup = (data.displayMode || 'popup') === 'popup';
@@ -127,8 +178,10 @@ chrome.storage.local.get(
       serverUrl = data.serverUrl;
       token = data.token;
       userName = data.userName || '';
-      settingServerUrl.textContent = serverUrl;
+      settingUrl.value = serverUrl;
+      settingToken.value = token;
       showNotesScreen();
+      checkConnection();
     } else {
       showSetupScreen();
     }
@@ -310,9 +363,11 @@ btnConnect.addEventListener('click', async function () {
     serverUrl = url;
     token = tok;
     userName = user.name || '';
-    settingServerUrl.textContent = serverUrl;
+    settingUrl.value = serverUrl;
+    settingToken.value = token;
     chrome.storage.local.set({ serverUrl: serverUrl, token: token, userName: userName });
     showNotesScreen();
+    checkConnection();
   } catch (e) {
     showSetupError('Cannot reach server. Check the URL and your network.');
   } finally {
@@ -347,6 +402,9 @@ function disconnect() {
     hasUnsavedChanges = false;
     if (tiptapEditor) { tiptapEditor.destroy(); tiptapEditor = null; }
     textEditor.value = '';
+    settingUrl.value = '';
+    settingToken.value = '';
+    setConnectionStatus('disconnected');
     inputUrl.value = '';
     inputToken.value = '';
     closeSettings();
@@ -385,6 +443,12 @@ function openNoteInEditor(note) {
   currentNoteName = note ? note.name : null;
   hasUnsavedChanges = false;
   clearAutoSave();
+
+  // Remember last viewed note for startup behavior
+  if (note && note.name) {
+    lastViewedNoteName = note.name;
+    chrome.storage.local.set({ lastViewedNoteName: note.name });
+  }
 
   rightEmpty.classList.add('hidden');
   editorPane.classList.remove('hidden');
@@ -486,11 +550,13 @@ async function doAutoSave() {
 
     hasUnsavedChanges = false;
     setSaveStatus('saved');
+    setConnectionStatus('connected');
     renderNotesList();
 
   } catch (err) {
     console.error('Auto-save failed:', err);
     setSaveStatus('error');
+    setConnectionStatus('disconnected');
     showToast('Auto-save failed. Will retry...', true);
     autoSaveTimer = setTimeout(doAutoSave, 3000);
   } finally {
@@ -627,6 +693,34 @@ function updateToolbarState() {
   });
 }
 
+/* ── Startup behavior ─────────────────────────────────────── */
+function applyStartupBehavior() {
+  if (startupBehavior === 'last-viewed' && lastViewedNoteName && allNotes.length) {
+    var note = allNotes.find(function (n) { return n.name === lastViewedNoteName; });
+    if (note) {
+      openNoteInEditor(note);
+      return;
+    }
+    // Last viewed note was deleted — fall through
+  }
+
+  if (startupBehavior === 'new-note') {
+    openNewNote();
+    return;
+  }
+
+  // Update empty state message based on context
+  var emptyText = $('right-empty-text');
+  var emptyHint = $('right-empty-hint');
+  if (!allNotes.length) {
+    emptyText.textContent = 'No notes yet. Create your first one!';
+    emptyHint.textContent = 'Ctrl+N to create';
+  } else {
+    emptyText.textContent = 'Select a note or create a new one';
+    emptyHint.textContent = 'Ctrl+N to create';
+  }
+}
+
 /* ── Load notes ────────────────────────────────────────────── */
 async function loadNotes() {
   hideToast();
@@ -635,12 +729,14 @@ async function loadNotes() {
   try {
     var res = await api('/api/v1/memos?pageSize=100');
     if (res.status === 401) {
+      setConnectionStatus('disconnected');
       showToast('Session expired. Please reconnect.', true);
       renderNotesList();
       return;
     }
     if (!res.ok) throw new Error('HTTP ' + res.status);
 
+    setConnectionStatus('connected');
     var data = await res.json();
     allNotes = (data.memos || []).sort(function (a, b) {
       return new Date(b.updateTime || b.createTime) - new Date(a.updateTime || a.createTime);
@@ -655,8 +751,12 @@ async function loadNotes() {
           el.classList.toggle('active', el.dataset.name === still.name);
         });
       }
+    } else {
+      // Apply startup behavior on first load
+      applyStartupBehavior();
     }
   } catch (err) {
+    setConnectionStatus('disconnected');
     console.error('loadNotes:', err);
     showToast('Failed to load notes.', true);
     renderNotesList();
@@ -947,6 +1047,54 @@ function closeSettings() {
   settingsOverlay.classList.add('hidden');
 }
 
+// Settings tabs
+var settingsTabIds = ['general', 'connection', 'shortcuts'];
+document.querySelectorAll('.settings-tab').forEach(function (tab) {
+  tab.addEventListener('click', function () {
+    document.querySelectorAll('.settings-tab').forEach(function (t) { t.classList.remove('active'); });
+    tab.classList.add('active');
+    var target = tab.dataset.settingsTab;
+    settingsTabIds.forEach(function (id) {
+      $('settings-tab-' + id).classList.toggle('hidden', target !== id);
+    });
+  });
+});
+
+// Save connection settings
+btnSaveConn.addEventListener('click', async function () {
+  var newUrl = settingUrl.value.trim().replace(/\/+$/, '');
+  var newToken = settingToken.value.trim();
+
+  if (!newUrl || !newToken) {
+    showToast('URL and token are required.', true);
+    return;
+  }
+
+  // Always save credentials
+  serverUrl = newUrl;
+  token = newToken;
+  chrome.storage.local.set({ serverUrl: serverUrl, token: token });
+
+  // Then test the connection
+  setConnectionStatus('checking');
+  try {
+    var res = await fetch(newUrl + '/api/v1/memos?pageSize=1', {
+      headers: { 'Authorization': 'Bearer ' + newToken },
+    });
+    if (res.ok) {
+      setConnectionStatus('connected');
+      showToast('Connection saved.');
+      loadNotes();
+    } else {
+      setConnectionStatus('disconnected');
+      showToast('Saved. Server returned ' + res.status + ' — will retry when available.', true);
+    }
+  } catch (e) {
+    setConnectionStatus('disconnected');
+    showToast('Saved. Server unreachable — will retry when available.', true);
+  }
+});
+
 settingTheme.addEventListener('change', function () {
   var theme = settingTheme.value;
   applyTheme(theme);
@@ -963,6 +1111,11 @@ settingDisplay.addEventListener('change', function () {
   showToast(mode === 'popup'
     ? 'Popup mode. Close and reopen the extension.'
     : 'Window mode. Close and click the icon again.');
+});
+
+settingStartup.addEventListener('change', function () {
+  startupBehavior = settingStartup.value;
+  chrome.storage.local.set({ startupBehavior: startupBehavior });
 });
 
 /* ── Helpers ───────────────────────────────────────────────── */

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Memos – Private Notes",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Private markdown notes synced to your self-hosted Memos server.",
   "action": {
     "default_popup": "popup.html",
@@ -19,8 +19,12 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "permissions": ["storage"],
-  "host_permissions": ["<all_urls>"],
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'none';"
   }
