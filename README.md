@@ -9,9 +9,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/user/memos-note/releases"><img src="https://img.shields.io/github/v/release/user/memos-note?style=flat-square" alt="Release" /></a>
-  <a href="https://github.com/user/memos-note/blob/main/LICENSE"><img src="https://img.shields.io/github/license/user/memos-note?style=flat-square" alt="License" /></a>
-  <a href="https://chrome.google.com/webstore"><img src="https://img.shields.io/badge/Chrome%20Web%20Store-Install-4285F4?style=flat-square&logo=googlechrome&logoColor=white" alt="Chrome Web Store" /></a>
+  <a href="https://github.com/vitaliisili/memos_note/releases"><img src="https://img.shields.io/github/v/release/vitaliisili/memos_note?style=flat-square" alt="Release" /></a>
+  <a href="https://github.com/vitaliisili/memos_note/blob/main/LICENSE"><img src="https://img.shields.io/github/license/vitaliisili/memos_note?style=flat-square" alt="License" /></a>
+  <a href="https://chromewebstore.google.com/detail/ldlbdmfpdgjofaalcbkjoijjkbpcebag?utm_source=item-share-cb"><img src="https://img.shields.io/badge/Chrome%20Web%20Store-Install-4285F4?style=flat-square&logo=googlechrome&logoColor=white" alt="Chrome Web Store" /></a>
 </p>
 
 ---
@@ -63,14 +63,14 @@
 
 ### Chrome Web Store
 
-Install from the [Chrome Web Store](#) (link coming soon).
+Install from the [Chrome Web Store](https://chromewebstore.google.com/detail/ldlbdmfpdgjofaalcbkjoijjkbpcebag?utm_source=item-share-cb).
 
 ### Manual / Development
 
 ```bash
 # Clone the repo
-git clone https://github.com/user/memos-note.git
-cd memos-note
+git clone https://github.com/vitaliisili/memos_note.git
+cd memos_note
 
 # Install dependencies and build
 make build
