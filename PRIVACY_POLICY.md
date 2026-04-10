@@ -42,7 +42,7 @@ You can remove all stored data at any time by:
 ## Open Source
 
 This extension is open source. You can review the full source code at:
-https://github.com/vitaliisili/memos-note
+https://github.com/vitaliisili/memos_note
 
 ## Contact
 
